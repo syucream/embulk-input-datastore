@@ -1,0 +1,27 @@
+buildscript {
+    ext.kotlin_version = '1.2.31'
+    repositories {
+        jcenter()
+        maven { url 'http://kamatama41.github.com/maven-repository/repository' }
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.github.kamatama41:gradle-embulk-plugin:0.2.0"
+        classpath "net.researchgate:gradle-release:2.6.0"
+    }
+}
+
+apply plugin: "com.github.kamatama41.embulk"
+
+embulk {
+    version = "0.8.18"
+    category = "input"
+    name = "datastore"
+    authors = ["syucream"]
+    email = "syucream1031@gmail.com"
+    homepage = "https://github.com/syucream/embulk-input-datastore"
+}
+
+dependencies {
+    implementation 'com.google.cloud:google-cloud-datastore:1.27.0'
+}
