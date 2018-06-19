@@ -23,5 +23,8 @@ embulk {
 }
 
 dependencies {
+    // To refer KClass::class.java
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+
     implementation 'com.google.cloud:google-cloud-datastore:1.27.0'
 }
