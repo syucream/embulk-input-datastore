@@ -1,5 +1,7 @@
 # Datastore input plugin for Embulk
 
+[![Gem Version](https://badge.fury.io/rb/embulk-input-datastore.svg)](https://badge.fury.io/rb/embulk-input-datastore)
+
 A embulk input plugin fetches Cloud Datastore entities.
 
 ## Overview
