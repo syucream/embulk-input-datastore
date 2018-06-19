@@ -10,6 +10,7 @@ import org.embulk.spi.*
 import org.embulk.spi.type.Types
 import org.msgpack.value.ValueFactory
 import java.io.FileInputStream
+import java.io.IOException
 
 class DatastoreInputPlugin : InputPlugin {
     // number of run() method calls
@@ -72,9 +73,11 @@ class DatastoreInputPlugin : InputPlugin {
                     }
 
             pageBuilder.finish()
+        } ?: run {
+            throw IOException("Datastore client is unavailable.")
         }
 
-        throw UnsupportedOperationException("DatastoreInputPlugin.run method is not implemented yet")
+        return Exec.newTaskReport()
     }
 
     override fun guess(config: ConfigSource): ConfigDiff {
