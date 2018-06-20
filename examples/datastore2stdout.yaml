@@ -1,0 +1,7 @@
+in:
+  type: datastore
+  json_keyfile: ~/.gcp/syucream_private.json
+  gql: "SELECT * FROM myKind WHERE myProp >= 100 AND myProp < 200"
+
+out:
+  type: stdout
