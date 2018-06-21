@@ -1,7 +1,8 @@
 in:
   type: datastore
-  json_keyfile: ~/.gcp/syucream_private.json
-  gql: "SELECT * FROM myKind WHERE myProp >= 100 AND myProp < 200"
+  project_id: "your-gcppj-123"
+  json_keyfile: credential.json
+  gql: "SELECT * FROM myKind"
 
 out:
   type: stdout

@@ -13,6 +13,7 @@ A embulk input plugin fetches Cloud Datastore entities.
 
 ## Configuration
 
+- **project_id**: your GCP project_id. (string, required)
 - **json_keyfile**: A path to JSON keyfile. (string, required)
 - **gql**: A GQL fetches to Cloud Datastore (string, required)
 - **json_column_name**: description (string, default: `"record"`)
@@ -22,8 +23,9 @@ A embulk input plugin fetches Cloud Datastore entities.
 ```yaml
 in:
   type: datastore
-  json_keyfile: example1
-  gql: "SELECT * FROM myKind WHERE myProp >= 100 AND myProp < 200"
+  project_id: "your-gcppj-123"
+  json_keyfile: credential.json
+  gql: "SELECT * FROM myKind"
 ```
 
 
@@ -35,5 +37,7 @@ $ ./gradlew gem  # -t to watch change of files and rebuild continuously
 
 ## NOTE
 
-Currently this plugin aggregates fetched entities to 1 'json' type column.
+- Currently this plugin has below limitations:
+  - Aggregate fetched properties to 1 'json' type column.
+  - `ENTITY`, `KEY`, `LIST`, `LAT_LNG`, `NULL`, `RAW_VALUE` types are not supported.
 

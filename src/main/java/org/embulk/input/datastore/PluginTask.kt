@@ -7,6 +7,9 @@ import org.embulk.config.Task
 import org.embulk.spi.BufferAllocator
 
 interface PluginTask : Task {
+    @get:Config("project_id")
+    val projectId: String
+
     @get:Config("json_keyfile")
     val jsonKeyfile: String
 
