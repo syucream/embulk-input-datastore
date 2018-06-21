@@ -9,3 +9,11 @@ build/
 /.metadata/
 .classpath
 .project
+
+# RubyGems
+*.gem
+*.gemspec
+*.iml
+
+# development, debug
+*.json
