@@ -61,26 +61,10 @@ class DatastoreInputPlugin : InputPlugin {
                 .forEach { entity ->
                     logger.debug(entity.toString())
 
-                    // TODO separate/simplify generating JSON
-                    val pairs = entity.names.flatMap { name ->
-                        val dsValue = entity.getValue<Value<Any>>(name)
-                        val strVal: String? = when (dsValue.type) {
-                            ValueType.BLOB -> (dsValue.get() as ByteArray).toString()
-                            ValueType.BOOLEAN -> (dsValue.get() as Boolean).toString()
-                            ValueType.DOUBLE -> (dsValue.get() as Double).toString()
-                            ValueType.LONG -> (dsValue.get() as Long).toString()
-                            ValueType.STRING -> "\"${dsValue.get() as String}\""
-                            ValueType.TIMESTAMP -> (dsValue.get() as Timestamp).toString()
-                            else -> null // NOTE, TODO: LIST, ENTITY, ... is still unsupported
-                        }
-                        strVal?.let { listOf(Pair<String, String>(name, it)) } ?: listOf()
-                    }
-                    val json = "{" + pairs.map { pair ->
-                        "\"${pair.first}\": ${pair.second}"
-                    }.joinToString() + "}"
+                    val json = entityToJsonObject(entity)
+                    logger.debug(json)
 
-                    val msgpackValue = ValueFactory.newString(json)
-                    pageBuilder.setJson(col, msgpackValue)
+                    pageBuilder.setJson(col, ValueFactory.newString(json))
                     pageBuilder.addRecord()
                 }
 
@@ -107,5 +91,62 @@ class DatastoreInputPlugin : InputPlugin {
                 .setCredentials(cred)
                 .build()
                 .service
+    }
+
+    /**
+     *  Datastore entity -> JSON String
+     *  e.g.) '{"name": "value", ...}'
+     *
+     */
+    private fun entityToJsonObject(entity: FullEntity<*>): String? {
+        val fields = entity.names.flatMap { name ->
+            val dsValue = entity.getValue<Value<Any>>(name)
+            val strVal = valueToField(dsValue)
+            strVal?.let { listOf("\"${name}\":${it}") } ?: listOf()
+        }
+        return "{" + fields.joinToString() + "}"
+    }
+
+    /**
+     *  Datastore property value list -> JSON Array
+     *  e.g.) '[1,2,3]'
+     *
+     */
+    private fun listToJsonArray(values: List<*>): String? {
+        // NOTE: Do unsafe cast because of type erasure...
+        val anyValues = values as? List<Value<Any>>
+
+        anyValues?.let {
+            val fields = it.flatMap { v ->
+                val strVal = valueToField(v)
+                strVal?.let { listOf(it) } ?: listOf()
+            }
+            return "[" + fields.joinToString() + "]"
+        }
+
+        return null
+    }
+
+    /**
+     *  Datastore property value -> JSON field string
+     *  e.g.) '"name":"value"'
+     *
+     */
+    private fun valueToField(dsValue: Value<Any>): String? {
+        return when (dsValue.type) {
+            ValueType.BLOB -> (dsValue.get() as ByteArray).toString()
+            ValueType.BOOLEAN -> (dsValue.get() as Boolean).toString()
+            ValueType.DOUBLE -> (dsValue.get() as Double).toString()
+            ValueType.ENTITY -> entityToJsonObject(dsValue.get() as FullEntity<*>)
+            ValueType.KEY -> (dsValue.get() as Key).toString()
+            ValueType.LAT_LNG -> (dsValue.get() as LatLngValue).toString()
+            ValueType.LIST -> listToJsonArray(dsValue.get() as List<*>)
+            ValueType.LONG -> (dsValue.get() as Long).toString()
+            ValueType.NULL -> "null"
+            ValueType.RAW_VALUE -> (dsValue.get() as RawValue).toString()
+            ValueType.STRING -> "\"${dsValue.get() as String}\""
+            ValueType.TIMESTAMP -> (dsValue.get() as Timestamp).toString()
+            else -> null // NOTE: unexpected or unsupported type
+        }
     }
 }

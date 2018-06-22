@@ -39,5 +39,4 @@ $ ./gradlew gem  # -t to watch change of files and rebuild continuously
 
 - Currently this plugin has below limitations:
   - Aggregate fetched properties to 1 'json' type column.
-  - `ENTITY`, `KEY`, `LIST`, `LAT_LNG`, `NULL`, `RAW_VALUE` types are not supported.
 
