@@ -2,7 +2,7 @@ in:
   type: datastore
   project_id: "your-gcppj-123"
   json_keyfile: credential.json
-  gql: "SELECT * FROM myKind"
+  gql: "SELECT * FROM myKind WHERE myProp >= 100 AND myProp < 200"
 
 out:
   type: stdout
