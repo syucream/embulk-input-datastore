@@ -53,7 +53,7 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
         val pageBuilder = PageBuilder(allocator, schema, output)
 
         val query = Query
-                .newGqlQueryBuilder(Query.ResultType.ENTITY, task.gql)
+                .newGqlQueryBuilder(getGQLResultMode(task.gql), task.gql)
                 .setAllowLiteral(true)
                 .build()
 
@@ -64,8 +64,18 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
                 .forEach { entity ->
                     logger?.debug(entity.toString())
 
-                    val json = entityToJsonObject(entity)
-                    logger?.debug(json)
+
+                    val json = when(entity) {
+                        is FullEntity<*> -> entityToJsonObject(entity)
+                        is ProjectionEntity -> entityToJsonObject(entity)
+                        else -> null
+                    }
+
+                    json?.let {
+                        logger?.debug(json)
+                    } ?: run {
+                        logger?.error("Unexpected result type")
+                    }
 
                     pageBuilder.setJson(col, ValueFactory.newString(json))
                     pageBuilder.addRecord()
@@ -101,7 +111,7 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
      *  e.g.) '{"name": "value", ...}'
      *
      */
-    private fun entityToJsonObject(entity: FullEntity<*>): String? {
+    private fun entityToJsonObject(entity: BaseEntity<*>): String? {
         val fields = entity.names.flatMap { name ->
             val dsValue = entity.getValue<Value<Any>>(name)
             val strVal = valueToField(dsValue)
@@ -140,7 +150,7 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
             ValueType.BLOB -> "\"${b64encoder.encodeToString((dsValue.get() as Blob).toByteArray())}\""
             ValueType.BOOLEAN -> (dsValue.get() as Boolean).toString()
             ValueType.DOUBLE -> (dsValue.get() as Double).toString()
-            ValueType.ENTITY -> entityToJsonObject(dsValue.get() as FullEntity<*>)
+            ValueType.ENTITY -> entityToJsonObject(dsValue.get() as BaseEntity<*>)
             ValueType.KEY -> (dsValue.get() as Key).toString()
             ValueType.LAT_LNG -> (dsValue.get() as LatLngValue).toString()
             ValueType.LIST -> listToJsonArray(dsValue.get() as List<*>)
@@ -150,6 +160,22 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
             ValueType.STRING -> "\"${dsValue.get() as String}\""
             ValueType.TIMESTAMP -> "\"${dsValue.get() as Timestamp}\""
             else -> null // NOTE: unexpected or unsupported type
+        }
+    }
+
+    /**
+     *  Check the GQL will return FullEntity or ProjectionEntity
+     *  NOTE: GQL accepts '*' at only after 'SELECT'
+     *    https://cloud.google.com/datastore/docs/reference/gql_reference
+     *
+     */
+    private fun getGQLResultMode(gql: String): Query.ResultType<*> {
+        return if (gql.indexOf("*") >= 0) {
+            // Lookup all columns
+            Query.ResultType.ENTITY
+        } else {
+            // Lookup a part of columns
+            Query.ResultType.PROJECTION_ENTITY
         }
     }
 }
