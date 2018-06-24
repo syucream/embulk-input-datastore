@@ -12,11 +12,11 @@ import org.embulk.spi.type.Types
 import org.msgpack.value.ValueFactory
 import java.io.FileInputStream
 
-class DatastoreInputPlugin : InputPlugin {
+class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
     // number of run() method calls
     private val TASK_COUNT = 1
 
-    private val logger = Exec.getLogger(javaClass)
+    private val logger = if (doLogging) { Exec.getLogger(javaClass) } else { null }
 
     override fun transaction(config: ConfigSource,
                              control: InputPlugin.Control): ConfigDiff {
@@ -59,10 +59,10 @@ class DatastoreInputPlugin : InputPlugin {
 
         datastore.run(query)
                 .forEach { entity ->
-                    logger.debug(entity.toString())
+                    logger?.debug(entity.toString())
 
                     val json = entityToJsonObject(entity)
-                    logger.debug(json)
+                    logger?.debug(json)
 
                     pageBuilder.setJson(col, ValueFactory.newString(json))
                     pageBuilder.addRecord()
