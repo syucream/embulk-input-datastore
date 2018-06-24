@@ -54,6 +54,7 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
 
         val query = Query
                 .newGqlQueryBuilder(Query.ResultType.ENTITY, task.gql)
+                .setAllowLiteral(true)
                 .build()
 
         val datastore = createDatastoreClient(task)
