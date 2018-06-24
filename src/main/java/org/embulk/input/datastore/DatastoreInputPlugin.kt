@@ -11,12 +11,14 @@ import org.embulk.spi.*
 import org.embulk.spi.type.Types
 import org.msgpack.value.ValueFactory
 import java.io.FileInputStream
+import java.util.Base64
 
 class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
     // number of run() method calls
     private val TASK_COUNT = 1
 
     private val logger = if (doLogging) { Exec.getLogger(javaClass) } else { null }
+    private val b64encoder = Base64.getEncoder()
 
     override fun transaction(config: ConfigSource,
                              control: InputPlugin.Control): ConfigDiff {
@@ -134,7 +136,7 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
      */
     private fun valueToField(dsValue: Value<Any>): String? {
         return when (dsValue.type) {
-            ValueType.BLOB -> (dsValue.get() as ByteArray).toString()
+            ValueType.BLOB -> "\"${b64encoder.encodeToString((dsValue.get() as Blob).toByteArray())}\""
             ValueType.BOOLEAN -> (dsValue.get() as Boolean).toString()
             ValueType.DOUBLE -> (dsValue.get() as Double).toString()
             ValueType.ENTITY -> entityToJsonObject(dsValue.get() as FullEntity<*>)
@@ -145,7 +147,7 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
             ValueType.NULL -> "null"
             ValueType.RAW_VALUE -> (dsValue.get() as RawValue).toString()
             ValueType.STRING -> "\"${dsValue.get() as String}\""
-            ValueType.TIMESTAMP -> (dsValue.get() as Timestamp).toString()
+            ValueType.TIMESTAMP -> "\"${dsValue.get() as Timestamp}\""
             else -> null // NOTE: unexpected or unsupported type
         }
     }
