@@ -9,6 +9,7 @@ build/
 /.metadata/
 .classpath
 .project
+out
 
 # RubyGems
 *.gem
