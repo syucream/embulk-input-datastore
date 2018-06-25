@@ -113,4 +113,28 @@ object DatastoreInputPluginSpec : Spek({
             }
         }
     }
+
+    describe("getGQLResultMode()") {
+        val plugin = DatastoreInputPlugin(false)
+
+        val method = plugin::class.memberFunctions.find { it.name == "getGQLResultMode" }
+        val accesibleMethod = method!!.let {
+            it.isAccessible = true
+            it
+        }
+
+        on("SELECT * query") {
+            it("should returns FullEntity") {
+                val resultMode = accesibleMethod.call(plugin, "SELECT * FROM myKind") as Query.ResultType<*>
+                assertEquals(Query.ResultType.ENTITY, resultMode)
+            }
+        }
+
+        on("SELECT non-* query") {
+            it("should returns ProjecttionEntity") {
+                val resultMode = accesibleMethod.call(plugin, "SELECT myProp FROM myKind") as Query.ResultType<*>
+                assertEquals(Query.ResultType.PROJECTION_ENTITY, resultMode)
+            }
+        }
+    }
 })

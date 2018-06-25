@@ -17,7 +17,11 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
     // number of run() method calls
     private val TASK_COUNT = 1
 
-    private val logger = if (doLogging) { Exec.getLogger(javaClass) } else { null }
+    private val logger = if (doLogging) {
+        Exec.getLogger(javaClass)
+    } else {
+        null
+    }
     private val b64encoder = Base64.getEncoder()
 
     override fun transaction(config: ConfigSource,
@@ -65,7 +69,7 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
                     logger?.debug(entity.toString())
 
 
-                    val json = when(entity) {
+                    val json = when (entity) {
                         is FullEntity<*> -> entityToJsonObject(entity)
                         is ProjectionEntity -> entityToJsonObject(entity)
                         else -> null
