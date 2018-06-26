@@ -8,6 +8,7 @@ import org.embulk.config.ConfigDiff
 import org.embulk.config.ConfigSource
 import org.embulk.config.TaskSource
 import org.embulk.spi.*
+import org.embulk.spi.json.JsonParser
 import org.embulk.spi.type.Types
 import org.msgpack.value.ValueFactory
 import java.io.FileInputStream
@@ -23,6 +24,7 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
         null
     }
     private val b64encoder = Base64.getEncoder()
+    private val jsonParser = JsonParser()
 
     override fun transaction(config: ConfigSource,
                              control: InputPlugin.Control): ConfigDiff {
@@ -81,7 +83,7 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
                         logger?.error("Unexpected result type")
                     }
 
-                    pageBuilder.setJson(col, ValueFactory.newString(json))
+                    pageBuilder.setJson(col, jsonParser.parse(json))
                     pageBuilder.addRecord()
                 }
 
