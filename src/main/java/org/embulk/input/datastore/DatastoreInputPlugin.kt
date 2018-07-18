@@ -10,13 +10,13 @@ import org.embulk.config.TaskSource
 import org.embulk.spi.*
 import org.embulk.spi.json.JsonParser
 import org.embulk.spi.type.Types
-import org.msgpack.value.ValueFactory
 import java.io.FileInputStream
 import java.util.Base64
 
 class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
     // number of run() method calls
     private val TASK_COUNT = 1
+    private val KEY_KEY = "__key__"
 
     private val logger = if (doLogging) {
         Exec.getLogger(javaClass)
@@ -70,7 +70,6 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
                 .forEach { entity ->
                     logger?.debug(entity.toString())
 
-
                     val json = when (entity) {
                         is FullEntity<*> -> entityToJsonObject(entity)
                         is ProjectionEntity -> entityToJsonObject(entity)
@@ -123,7 +122,14 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
             val strVal = valueToField(dsValue)
             strVal?.let { listOf("\"${name}\":${it}") } ?: listOf()
         }
-        return "{" + fields.joinToString() + "}"
+
+        // Append KEY values if it exists
+        val keyFields = getEntityKey(entity)?.let {
+            listOf("\"${KEY_KEY}\":${it}")
+        } ?: listOf()
+        val decoratedFields = fields.plus(keyFields)
+
+        return "{" + decoratedFields.joinToString() + "}"
     }
 
     /**
@@ -182,6 +188,24 @@ class DatastoreInputPlugin(doLogging: Boolean = true) : InputPlugin {
         } else {
             // Lookup a part of columns
             Query.ResultType.PROJECTION_ENTITY
+        }
+    }
+
+    /**
+     * Get KEY info string (with calling private method ...)
+     */
+    private fun getEntityKey(entity: BaseEntity<*>): String? {
+        if (entity.hasKey()) {
+            val key = entity.key
+
+            // NOTE: getLeaf() is not public ...
+            val mirror = BaseKey::class.java.getDeclaredMethod("getLeaf")
+            mirror.isAccessible = true
+            val pe = mirror.invoke(key) as PathElement
+
+            return "{\"kind\":\"${pe.kind}\",\"id\":\"${pe.id}\",\"name\":\"${pe.name}\"}"
+        } else {
+            return null
         }
     }
 }
